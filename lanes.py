@@ -12,6 +12,11 @@ def make_coordinates(image, line_parameters):
 def average_slope_intercept(image, lines):
     left_fit = []
     right_fit = []
+
+    if lines is None:
+        print("No lines detected")
+        return np.array([])  # Return an empty array instead of crashing
+
     for line in lines:
         x1, y1, x2, y2 = line.reshape(4)
         parameters = np.polyfit((x1, x2), (y1, y2), 1)
@@ -22,11 +27,26 @@ def average_slope_intercept(image, lines):
         else:
             right_fit.append((slope, intercept))
 
-    left_fit_average = np.average(left_fit, axis = 0)
-    right_fit_average = np.average(right_fit, axis = 0)
-    left_line = make_coordinates(image, left_fit_average)
-    right_line = make_coordinates(image, right_fit_average)
-    return np.array([left_line, right_line])
+    # Check if we have valid left or right lane lines before averaging
+    left_line = None
+    right_line = None
+
+    if len(left_fit) > 0:
+        left_fit_average = np.average(left_fit, axis=0)
+        left_line = make_coordinates(image, left_fit_average)
+
+    if len(right_fit) > 0:
+        right_fit_average = np.average(right_fit, axis=0)
+        right_line = make_coordinates(image, right_fit_average)
+
+    # Only return non-empty lane lines
+    lane_lines = []
+    if left_line is not None:
+        lane_lines.append(left_line)
+    if right_line is not None:
+        lane_lines.append(right_line)
+
+    return np.array(lane_lines)
 
 def canny(image):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
